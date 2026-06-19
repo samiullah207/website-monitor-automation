@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="A professional, 24/7 website uptime monitor dashboard. Track status, toggle alerts, and configure automated GitHub Actions checks.">
+  <title>UptimePulse | 24/7 Website Monitoring Dashboard</title>
+  
+  <!-- Modern Google Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome Icons for clean visuals -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Local Styles -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-container">
+    
+    <!-- Header -->
+    <header class="app-header">
+      <div class="logo-area">
+        <div class="logo-icon">
+          <i class="fa-solid fa-square-poll-vertical"></i>
+        </div>
+        <div class="logo-text">
+          <h1>UptimePulse</h1>
+          <p>24/7 Automation & Alerting Dashboard</p>
+        </div>
+      </div>
+      <div class="header-badges">
+        <span class="status-indicator-pill active">
+          <span class="pulse-dot"></span> System Live
+        </span>
+      </div>
+    </header>
+
+    <!-- Stats Summary Cards -->
+    <section class="stats-grid">
+      <div class="stat-card" id="stat-total-card">
+        <div class="stat-icon total">
+          <i class="fa-solid fa-globe"></i>
+        </div>
+        <div class="stat-info">
+          <h3 class="stat-value" id="stat-total">0</h3>
+          <p class="stat-label">Total Websites</p>
+        </div>
+      </div>
+      <div class="stat-card" id="stat-active-card">
+        <div class="stat-icon active">
+          <i class="fa-solid fa-circle-check"></i>
+        </div>
+        <div class="stat-info">
+          <h3 class="stat-value" id="stat-active">0</h3>
+          <p class="stat-label">Active Monitoring</p>
+        </div>
+      </div>
+      <div class="stat-card" id="stat-offline-card">
+        <div class="stat-icon offline">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        <div class="stat-info">
+          <h3 class="stat-value" id="stat-offline">0</h3>
+          <p class="stat-label">Sites Offline</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Workspace -->
+    <main class="dashboard-main">
+      
+      <!-- Add New Website Form Component -->
+      <section class="form-container card-glass">
+        <div class="card-header">
+          <h2><i class="fa-solid fa-plus-circle"></i> Add Website to Monitor</h2>
+          <p>Configure automated check intervals via GitHub Actions</p>
+        </div>
+        <form id="add-website-form">
+          <div class="form-group">
+            <label for="site-name">Friendly Name</label>
+            <div class="input-wrapper">
+              <i class="fa-solid fa-signature input-icon"></i>
+              <input type="text" id="site-name" placeholder="e.g., My Portfolio" required autocomplete="off">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="site-url">Website URL</label>
+            <div class="input-wrapper">
+              <i class="fa-solid fa-link input-icon"></i>
+              <input type="url" id="site-url" placeholder="https://example.com" required autocomplete="off">
+            </div>
+          </div>
+          <button type="submit" class="btn-primary" id="btn-add-site">
+            <span class="btn-text">Start Monitoring</span>
+            <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </form>
+      </section>
+
+      <!-- Websites Table List Component -->
+      <section class="table-container card-glass">
+        <div class="card-header table-header-flex">
+          <div>
+            <h2><i class="fa-solid fa-list-check"></i> Monitored Websites</h2>
+            <p>View current status and toggle checks</p>
+          </div>
+          <button id="btn-refresh-list" class="btn-secondary" title="Refresh Table">
+            <i class="fa-solid fa-arrows-rotate"></i> Refresh
+          </button>
+        </div>
+
+        <div class="table-scroll-wrapper">
+          <table class="websites-table" id="websites-table">
+            <thead>
+              <tr>
+                <th>Website Name</th>
+                <th>Target URL</th>
+                <th>Status</th>
+                <th>Last Checked</th>
+                <th>Monitoring</th>
+                <th class="text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="websites-tbody">
+              <!-- Dynamically populated via JS -->
+              <tr class="table-empty-row">
+                <td colspan="6" class="text-center">
+                  <div class="empty-state-loader">
+                    <i class="fa-solid fa-circle-notch fa-spin"></i> Loading monitors...
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Footer Explanation -->
+    <footer class="app-footer">
+      <div class="footer-links">
+        <a href="#how-it-works"><i class="fa-solid fa-circle-info"></i> How it works</a>
+        <span class="divider">|</span>
+        <a href="https://github.com" target="_blank"><i class="fa-brands fa-github"></i> GitHub Automation</a>
+      </div>
+      <p>&copy; 2026 UptimePulse. Powered by Node.js & GitHub Actions Scheduler.</p>
+    </footer>
+
+  </div>
+
+  <!-- Toast Notification System -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Script Import -->
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,46 @@
+name: 24/7 Website Uptime Monitor
+
+on:
+  schedule:
+    # Runs every 5 minutes (standard cron expression)
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+    # Allows manual triggering of the workflow from the GitHub Actions tab
+
+permissions:
+  contents: write # Allows the bot to commit status updates back to websites.json
+
+jobs:
+  check-uptime:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Fetches full history so push will succeed
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci || npm install
+
+      - name: Run status check and send alerts
+        run: node monitor.js
+        env:
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          ALERT_TO_EMAIL: ${{ secrets.ALERT_TO_EMAIL }}
+
+      - name: Commit and push status updates
+        run: |
+          git config --global user.name "UptimePulse Bot"
+          git config --global user.email "uptimepulse-bot@users.noreply.github.com"
+          git add websites.json
+          # Commit only if there are actual modifications to websites.json
+          git diff --quiet && git diff --staged --quiet || (git commit -m "chore: update website uptime status [skip ci]" && git push)

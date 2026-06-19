@@ -1,0 +1,26 @@
+{
+  "name": "website-monitor",
+  "version": "1.0.0",
+  "description": "A clean 24/7 Website Monitoring Dashboard and Gmail Alert Automation.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "monitor": "node monitor.js"
+  },
+  "keywords": [
+    "website",
+    "monitor",
+    "uptime",
+    "gmail",
+    "dashboard",
+    "github-actions"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.7.2",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "nodemailer": "^6.9.13"
+  }
+}
