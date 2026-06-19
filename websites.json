@@ -27,7 +27,7 @@
     "name": "Test Broken",
     "url": "https://broken123456789test.com",
     "enabled": true,
-    "status": "Down",
+    "status": "Up",
     "lastChecked": "2026-06-19T15:02:29.047Z"
   }
 ]
