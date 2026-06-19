@@ -13,7 +13,7 @@
     "url": "https://github.com",
     "enabled": true,
     "status": "Up",
-    "lastChecked": "2026-06-19T15:02:29.018Z"
+    "lastChecked": "2026-06-19T15:52:17.701Z"
   },
   {
     "id": "1781879181881",
@@ -21,7 +21,7 @@
     "url": "http://example.http://example.comcom",
     "enabled": true,
     "status": "Down",
-    "lastChecked": "2026-06-19T15:02:29.044Z"
+    "lastChecked": "2026-06-19T15:52:17.735Z"
   },
   {
     "name": "Test Broken",
