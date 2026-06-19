@@ -13,7 +13,7 @@
     "url": "https://github.com",
     "enabled": true,
     "status": "Up",
-    "lastChecked": "2026-06-19T17:28:19.628Z"
+    "lastChecked": "2026-06-19T19:16:21.463Z"
   },
   {
     "id": "1781879181881",
@@ -21,13 +21,13 @@
     "url": "http://example.http://example.comcom",
     "enabled": true,
     "status": "Down",
-    "lastChecked": "2026-06-19T17:28:19.664Z"
+    "lastChecked": "2026-06-19T19:16:21.498Z"
   },
   {
     "name": "Test Broken",
     "url": "https://broken123456789test.com",
     "enabled": true,
     "status": "Down",
-    "lastChecked": "2026-06-19T17:28:19.666Z"
+    "lastChecked": "2026-06-19T19:16:21.500Z"
   }
 ]
