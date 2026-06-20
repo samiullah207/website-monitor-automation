@@ -92,15 +92,17 @@ function renderWebsites(websites) {
     }
 
     // Format lastChecked text
-    let displayChecked = site.lastChecked;
+    let displayChecked = 'Never';
     if (site.lastChecked && site.lastChecked !== 'Never') {
       try {
         const date = new Date(site.lastChecked);
         if (!isNaN(date.getTime())) {
           displayChecked = date.toLocaleString();
+        } else {
+          displayChecked = site.lastChecked;
         }
       } catch (e) {
-        // Fallback to raw string
+        displayChecked = site.lastChecked;
       }
     }
 

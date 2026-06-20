@@ -7,9 +7,6 @@ on:
   workflow_dispatch:
     # Allows manual triggering of the workflow from the GitHub Actions tab
 
-permissions:
-  contents: write # Allows the bot to commit status updates back to websites.json
-
 jobs:
   check-uptime:
     runs-on: ubuntu-latest
@@ -17,9 +14,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          # Fetches full history so push will succeed
-          fetch-depth: 0
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -36,11 +30,5 @@ jobs:
           GMAIL_USER: ${{ secrets.GMAIL_USER }}
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
           ALERT_TO_EMAIL: ${{ secrets.ALERT_TO_EMAIL }}
-
-      - name: Commit and push status updates
-        run: |
-          git config --global user.name "UptimePulse Bot"
-          git config --global user.email "uptimepulse-bot@users.noreply.github.com"
-          git add websites.json
-          # Commit only if there are actual modifications to websites.json
-          git diff --quiet && git diff --staged --quiet || (git commit -m "chore: update website uptime status [skip ci]" && git push)
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}

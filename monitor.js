@@ -1,13 +1,10 @@
-const fs = require('fs');
-const path = require('path');
 const axios = require('axios');
 const nodemailer = require('nodemailer');
 const dotenv = require('dotenv');
+const { supabase } = require('./services/supabase');
 
 // Load environment variables (useful for local testing)
 dotenv.config();
-
-const DATA_FILE = path.join(__dirname, 'websites.json');
 
 // Configuration from environment variables
 const GMAIL_USER = process.env.GMAIL_USER;
@@ -38,12 +35,9 @@ async function sendAlertEmail(website, previousStatus, currentStatus) {
   }
 
   const isDown = currentStatus === 'Down';
-  const subject = isDown 
-    ? `🚨 ALERT: Website Offline - ${website.name}` 
-    : `✅ RECOVERY: Website Online - ${website.name}`;
+  const subject = `🚨 ALERT: Website Offline - ${website.name}`;
 
-  const textContent = isDown
-    ? `Hello,
+  const textContent = `Hello,
 
 Your monitored website "${website.name}" is OFFLINE.
 
@@ -56,22 +50,9 @@ Details:
 Please investigate the issue immediately.
 
 Best,
-UptimePulse Automation`
-    : `Hello,
-
-Your monitored website "${website.name}" has RECOVERED and is now ONLINE.
-
-Details:
-• Name: ${website.name}
-• URL: ${website.url}
-• Status: UP
-• Checked At: ${new Date().toUTCString()}
-
-Best,
 UptimePulse Automation`;
 
-  const htmlContent = isDown
-    ? `
+  const htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; border: 1px solid #ef4444; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
         <div style="background-color: #ef4444; color: white; padding: 20px; text-align: center;">
           <h2 style="margin: 0; font-size: 24px;">🚨 Uptime Alert: Website Offline</h2>
@@ -99,35 +80,6 @@ UptimePulse Automation`;
           <p style="margin-top: 24px; font-size: 14px; color: #6b7280;">This is an automated notification from UptimePulse. You will be notified again once the website recovers.</p>
         </div>
       </div>
-    `
-    : `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; border: 1px solid #10b981; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-        <div style="background-color: #10b981; color: white; padding: 20px; text-align: center;">
-          <h2 style="margin: 0; font-size: 24px;">✅ Uptime Recovery: Website Online</h2>
-        </div>
-        <div style="padding: 24px; color: #1f2937; background-color: #ffffff; line-height: 1.6;">
-          <p style="font-size: 16px;">Great news! The following website has <strong>RECOVERED</strong> and is now back online:</p>
-          <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
-            <tr style="border-bottom: 1px solid #f3f4f6;">
-              <td style="padding: 10px 0; font-weight: bold; width: 120px;">Website Name</td>
-              <td style="padding: 10px 0; color: #4b5563;">${website.name}</td>
-            </tr>
-            <tr style="border-bottom: 1px solid #f3f4f6;">
-              <td style="padding: 10px 0; font-weight: bold;">Target URL</td>
-              <td style="padding: 10px 0; color: #2563eb;"><a href="${website.url}" style="color: #2563eb; text-decoration: none;">${website.url}</a></td>
-            </tr>
-            <tr style="border-bottom: 1px solid #f3f4f6;">
-              <td style="padding: 10px 0; font-weight: bold;">Status</td>
-              <td style="padding: 10px 0;"><span style="background-color: #ecfdf5; color: #065f46; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 14px;">UP & ONLINE</span></td>
-            </tr>
-            <tr>
-              <td style="padding: 10px 0; font-weight: bold;">Time Checked</td>
-              <td style="padding: 10px 0; color: #4b5563;">${new Date().toUTCString()}</td>
-            </tr>
-          </table>
-          <p style="margin-top: 24px; font-size: 14px; color: #6b7280;">This is an automated notification from UptimePulse. Your services are running normally.</p>
-        </div>
-      </div>
     `;
 
   try {
@@ -146,14 +98,10 @@ UptimePulse Automation`;
 
 // Function to check a single website status
 async function checkWebsite(website) {
-  // If not enabled, return the original object without checking
-  if (!website.enabled) {
-    return website;
-  }
-
   const previousStatus = website.status;
   let currentStatus = 'unknown';
   const checkedTime = new Date().toISOString();
+  let lastErrorDetail = null;
 
   console.log(`🔍 Checking website: "${website.name}" (${website.url})...`);
 
@@ -176,32 +124,46 @@ async function checkWebsite(website) {
     console.log(`   🟢 STATUS: UP (${response.status})`);
   } catch (error) {
     currentStatus = 'Down';
-    let detail = error.message;
+    lastErrorDetail = error.message;
     if (error.response) {
-      detail = `HTTP ${error.response.status}`;
+      lastErrorDetail = `HTTP ${error.response.status}`;
     } else if (error.code) {
-      detail = error.code; // e.g. ENOTFOUND, ECONNREFUSED
+      lastErrorDetail = error.code; // e.g. ENOTFOUND, ECONNREFUSED
     }
-    console.log(`   🔴 STATUS: DOWN (${detail})`);
+    console.log(`   🔴 STATUS: DOWN (${lastErrorDetail})`);
   }
 
-  // Trigger alert if status transition occurs:
-  // 1. Goes Down: (Up -> Down) or (unknown -> Down)
-  // 2. Recovers: (Down -> Up)
-  const isStatusTransition = previousStatus !== currentStatus;
-  const isDownTransition = (previousStatus === 'Up' || previousStatus === 'unknown') && currentStatus === 'Down';
-  const isUpTransition = previousStatus === 'Down' && currentStatus === 'Up';
+  // Trigger alert when status changes from Up or Unknown to Down, but not when remaining Down
+  const isDownTransition =
+    (previousStatus === 'Up' ||
+     !previousStatus ||
+     (typeof previousStatus === 'string' && previousStatus.toLowerCase() === 'unknown')) &&
+    currentStatus === 'Down';
 
-  if (isStatusTransition && (isDownTransition || isUpTransition)) {
+  if (isDownTransition) {
     console.log(`💥 Status changed for "${website.name}": ${previousStatus} ➡️ ${currentStatus}. Triggering alert...`);
     await sendAlertEmail(website, previousStatus, currentStatus);
   }
 
-  return {
-    ...website,
-    status: currentStatus,
-    lastChecked: checkedTime,
-  };
+  // Update website columns in Supabase database
+  try {
+    const { error: updateError } = await supabase
+      .from('websites')
+      .update({
+        status: currentStatus,
+        last_checked: checkedTime,
+        last_error: lastErrorDetail
+      })
+      .eq('id', website.id);
+
+    if (updateError) {
+      console.error(`❌ Error updating website "${website.name}" in database:`, updateError.message);
+    } else {
+      console.log(`💾 Successfully updated website "${website.name}" status in database.`);
+    }
+  } catch (dbErr) {
+    console.error(`❌ Database update exception for "${website.name}":`, dbErr.message);
+  }
 }
 
 // Main execution function
@@ -210,39 +172,33 @@ async function runMonitor() {
   console.log(`🕒 Uptime Monitor Cycle Started: ${new Date().toISOString()}`);
   console.log(`==================================================`);
 
-  // 1. Read websites list
-  if (!fs.existsSync(DATA_FILE)) {
-    console.log(`⚠️ Data file "${DATA_FILE}" does not exist. Exiting.`);
-    return;
-  }
-
+  // Fetch enabled websites from Supabase
   let websites = [];
   try {
-    const rawData = fs.readFileSync(DATA_FILE, 'utf8');
-    websites = JSON.parse(rawData);
+    const { data, error } = await supabase
+      .from('websites')
+      .select('*')
+      .eq('enabled', true);
+
+    if (error) {
+      console.error('❌ Error fetching websites from Supabase:', error.message);
+      process.exit(1);
+    }
+    websites = data || [];
   } catch (error) {
-    console.error('❌ Error parsing websites.json:', error);
+    console.error('❌ Exception fetching websites from Supabase:', error.message);
     process.exit(1);
   }
 
   if (websites.length === 0) {
-    console.log('ℹ️ No websites configured in websites.json. Exiting monitor.');
+    console.log('ℹ️ No enabled websites configured. Exiting monitor.');
     return;
   }
 
-  // 2. Check each website (run in parallel)
-  const updatedWebsites = await Promise.all(
+  // Check each website in parallel and update status directly in Supabase
+  await Promise.all(
     websites.map(site => checkWebsite(site))
   );
-
-  // 3. Write results back to websites.json
-  try {
-    fs.writeFileSync(DATA_FILE, JSON.stringify(updatedWebsites, null, 2));
-    console.log(`💾 Successfully updated websites.json with current statuses.`);
-  } catch (error) {
-    console.error('❌ Error writing updates to websites.json:', error);
-    process.exit(1);
-  }
 
   console.log(`==================================================`);
   console.log(`🏁 Uptime Monitor Cycle Completed.`);
